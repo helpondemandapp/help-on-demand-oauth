@@ -175,5 +175,5 @@ jobs:
           aws s3 sync build s3://${{ needs.deploy-commercial.outputs.deploy-bucket }} --delete
       - name: Invalidate CloudFront Distribution
         run: |-
-          INVALIDATION_ID = $(aws cloudfront create-invalidation --distribution-id ${{ needs.deploy-commercial.outputs.dist-id }} --paths "/*" --query 'Invalidation.Id' --output text)
-          aws cloudfront wait invalidation-completed --distribution-id ${{ needs.deploy-commercial.outputs.dist-id }} --id $INVALIDATION_ID
+          INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id "${{ needs.deploy-commercial.outputs.dist-id }}" --paths "/*" --query 'Invalidation.Id' --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "${{ needs.deploy-commercial.outputs.dist-id }}" --id "$INVALIDATION_ID"
