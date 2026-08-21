@@ -24,6 +24,7 @@ type ApiResourceProps = OAuthApiProps & {
     additionalLayers?: awsLambda.ILayerVersion[];
   };
   vpcRequired?: boolean;
+  isProxy?: boolean;
 };
 
 export class OAuthApi extends Construct {
@@ -34,6 +35,17 @@ export class OAuthApi extends Construct {
     this.api = new apiGateway.RestApi(this, 'OAuthApi', {
       endpointTypes: [apiGateway.EndpointType.REGIONAL], // GovCloud APIs must explicitly set the endpoint type to REGIONAL
       deployOptions: { stageName: 'prod' },
+    });
+
+    this.addResource({
+      path: '.well-known',
+      isProxy: true,
+      methods: ['GET'],
+      networks: props.networks,
+      globals: props.globals,
+      lambdaFunction: {
+        functionFolder: 'oauth-api/well-known',
+      },
     });
 
     this.addResource({
@@ -50,12 +62,15 @@ export class OAuthApi extends Construct {
   private addResource(props: ApiResourceProps) {
     const resourceId = props.path
       .split('/')
-      .map((segment) => segment.trim())
+      .map((segment) => segment.trim().replaceAll(/\./g, ''))
       .filter((segment) => segment.length > 0)
       .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
       .join('');
     const construct = new Construct(this, resourceId);
-    const resource = this.api.root.addResource(props.path);
+    const resources = [this.api.root.addResource(props.path)];
+    if (props.isProxy) {
+      resources.push(this.api.root.addResource(props.path + '/{proxy+}'));
+    }
     const lambdaPropsBase = {
       ...props.lambdaFunction,
       layers: props.globals.lambdaLayers,
@@ -64,6 +79,10 @@ export class OAuthApi extends Construct {
         logGroupName: `${Environment.STACK_NAME}/lambda/oauth-api/${props.path}`,
         retention: EnvironmentConfig.lambdaLogRetentionDays,
       }),
+      environmentVariablesOverride: {
+        AUTH_DOMAIN: Environment.AUTH_DOMAIN,
+        ...(props.lambdaFunction.environmentVariablesOverride ?? {}),
+      },
     };
     const lambdaProps =
       props.vpcRequired === true
@@ -76,7 +95,9 @@ export class OAuthApi extends Construct {
         : lambdaPropsBase;
     const lambda = new LambdaFunction(construct, `Lambda`, lambdaProps);
     for (const method of props.methods) {
-      resource.addMethod(method, new apiGateway.LambdaIntegration(lambda.lambda));
+      for (const resource of resources) {
+        resource.addMethod(method, new apiGateway.LambdaIntegration(lambda.lambda));
+      }
     }
   }
 
