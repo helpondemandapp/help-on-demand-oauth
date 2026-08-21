@@ -80,6 +80,16 @@ export class CommercialStack extends cdk.Stack {
             },
           ],
         },
+        '.well-known/*': {
+          origin: new origins.HttpOrigin(backendInvokeUrl.host, {
+            originPath: backendStagePath === '/' ? undefined : backendStagePath,
+            protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+          }),
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+        },
       },
       domainNames: [Environment.AUTH_DOMAIN],
       certificate: certificate,
