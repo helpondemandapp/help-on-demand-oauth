@@ -154,7 +154,7 @@ jobs:
         id: stack-outputs
         run: |-
           echo "deploy-bucket=$(aws cloudformation describe-stacks --stack-name hod-oauth --query "Stacks[0].Outputs[?OutputKey=='DeploymentBucketName'].OutputValue" --output text)" >> $GITHUB_OUTPUT
-          echo "dist-id=$(aws cloudformation describe-stacks --stack-name hod-oauth --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text)" >> $GITHUB_OUTPUT
+          echo "dist-id=$(aws cloudformation describe-stacks --stack-name hod-oauth --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)" >> $GITHUB_OUTPUT
   deploy-frontend:
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
