@@ -21,6 +21,8 @@ jobs:
   build-gov-cloud:
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+    outputs:
+      api-invoke-url: ${{ steps.stack-outputs.outputs.invoke-url }}
 
     steps:
       ### Setup ###
@@ -83,3 +85,17 @@ jobs:
           npm run cdk -- bootstrap
           npm run cdk -- synth
           npm run cdk -- deploy --require-approval never
+      - name: Create Stack Outputs
+        id: stack-outputs
+        run: |-
+          echo "invoke-url=$(aws cloudformation describe-stacks --stack-name hod-oauth --query "Stacks[0].Outputs[?OutputKey=='OAuthApiUrl'].OutputValue" --output text)" >> $GITHUB_OUTPUT
+  build-commercial:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+    needs: [build-gov-cloud]
+    steps:
+      ### Setup ###
+      - uses: actions/checkout@v7
+        name: Checkout code
+      - run: echo "${{ needs.build-gov-cloud.outputs.api-invoke-url }}"
+
