@@ -120,7 +120,6 @@ jobs:
       ### Setup ###
       - uses: actions/checkout@v7
         name: Checkout code
-      - run: echo "${{ needs.build-gov-cloud.outputs.api-invoke-url }}"
       - uses: aws-actions/configure-aws-credentials@v6
         name: Configure AWS credentials
         with:
@@ -146,6 +145,7 @@ jobs:
           AUTH_DOMAIN: ${{ vars.SERVER_HOST }}
           ENVIRONMENT_NAME: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
           CERT_ARN: ${{ vars.CERT_ARN }}
+          BACKEND_INVOKE_URL: ${{ needs.build-gov-cloud.outputs.api-invoke-url }}
         run: |-
           npm run cdk -- bootstrap
           npm run cdk -- synth
