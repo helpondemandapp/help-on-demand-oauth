@@ -60,16 +60,23 @@ export class OAuthApi extends Construct {
   }
 
   private addResource(props: ApiResourceProps) {
-    const resourceId = props.path
-      .split('/')
-      .map((segment) => segment.trim().replaceAll(/\./g, ''))
-      .filter((segment) => segment.length > 0)
-      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-      .join('');
+    if (props.path.trim().length === 0) {
+      throw new Error('API resource path cannot be empty');
+    }
+    if (props.path.includes('/')) {
+      throw new Error('API resource path cannot contain slashes');
+    }
+    if (props.path === '.') {
+      throw new Error('API resource path cannot be "."');
+    }
+
+    const normalizedPath = props.path.trim().replaceAll(/\./g, '');
+    const resourceId = normalizedPath.charAt(0).toUpperCase() + normalizedPath.slice(1);
+
     const construct = new Construct(this, resourceId);
     const resources = [this.api.root.addResource(props.path)];
     if (props.isProxy) {
-      resources.push(this.api.root.addResource(props.path + '/{proxy+}'));
+      resources.push(resources[0]!.addResource('{proxy+}'));
     }
     const lambdaPropsBase = {
       ...props.lambdaFunction,
