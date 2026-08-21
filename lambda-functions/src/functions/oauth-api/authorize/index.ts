@@ -1,9 +1,21 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { parseCookies } from '/opt/nodejs/protocol/http.js';
+import { Environment } from '/opt/nodejs/config/env.js';
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const cookies = parseCookies(event);
-  console.log(cookies);
+  const sessionCookie = cookies.session ?? null;
+
+  if (sessionCookie === null) {
+    return {
+      statusCode: 302,
+      headers: {
+        Location: `https://${Environment.AUTH_DOMAIN}/login`,
+      },
+      body: '',
+    };
+  }
+
   return {
     statusCode: 200,
     headers: {
