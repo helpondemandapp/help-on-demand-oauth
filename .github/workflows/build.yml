@@ -26,9 +26,6 @@ jobs:
       ### Setup ###
       - uses: actions/checkout@v7
         name: Checkout code
-      - uses: steve-todorov/oidc-debugger-action@main
-        with:
-          audience: sts.amazonaws.com
       - uses: aws-actions/configure-aws-credentials@v6
         name: Configure AWS credentials
         with:
