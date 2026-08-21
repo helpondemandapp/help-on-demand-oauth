@@ -89,7 +89,27 @@ jobs:
         id: stack-outputs
         run: |-
           echo "invoke-url=$(aws cloudformation describe-stacks --stack-name hod-oauth --query "Stacks[0].Outputs[?OutputKey=='OAuthApiUrl'].OutputValue" --output text)" >> $GITHUB_OUTPUT
-  build-commercial:
+  build-frontend:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+    steps:
+      - uses: actions/checkout@v7
+        name: Checkout code
+      - name: Setup Node.JS
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: |-
+          npm ci
+          node --run build
+      - name: Upload Frontend Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-build
+          path: frontend/dist
+  deploy-commercial:
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
     needs: [build-gov-cloud]
@@ -98,4 +118,3 @@ jobs:
       - uses: actions/checkout@v7
         name: Checkout code
       - run: echo "${{ needs.build-gov-cloud.outputs.api-invoke-url }}"
-
