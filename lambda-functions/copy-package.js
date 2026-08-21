@@ -11,9 +11,25 @@ if (distFolders.length === 0) {
 }
 const distFolder = distFolders[0];
 const functionsFolder = path.join(distFolder, 'src', 'functions');
+const foldersToCheck = [functionsFolder];
 
-const functionsFolders = (await fs.readdir(functionsFolder)).map((folder) => path.join(functionsFolder, folder));
-functionsFolders.push(path.join(distFolder, 'src', 'common'));
+const functionsFolders = [path.join(distFolder, 'src', 'common')];
+
+while (foldersToCheck.length > 0) {
+  const folder = foldersToCheck.pop();
+  const files = await fs.readdir(folder);
+  if (files.includes('index.js')) {
+    functionsFolders.push(folder);
+    continue;
+  }
+  for (const file of files) {
+    const filePath = path.join(folder, file);
+    const stat = await fs.stat(filePath);
+    if (stat.isDirectory()) {
+      foldersToCheck.push(filePath);
+    }
+  }
+}
 
 const packageFile = JSON.stringify({ type: 'module' });
 

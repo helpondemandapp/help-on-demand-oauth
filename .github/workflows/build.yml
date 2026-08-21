@@ -35,11 +35,9 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
-      - name: Add Account ID to Environment
+      - name: Add Environment Variables
         run: |-
           echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)" >> $GITHUB_ENV
-      - name: Add Node Version to Environment
-        run: |-
           echo "NODE_VERSION=$(tr -cd '0-9' < .node-version)" >> $GITHUB_ENV
       ### Build Source ###
       ### Build Lambdas ###
@@ -77,6 +75,10 @@ jobs:
         env:
           STACK_NAME: 'hod-oauth'
           AWS_PARTITION: 'gov-cloud'
+          VPC_ID: ${{ vars.VPC_ID }}
+          PRIVATE_SUBNET_IDS: ${{ vars.PRIVATE_SUBNETS }}
+          AUTH_DOMAIN: ${{ vars.SERVER_HOST }}
+          ENVIRONMENT_NAME: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
         run: |-
           npm run cdk -- bootstrap
           npm run cdk -- synth
