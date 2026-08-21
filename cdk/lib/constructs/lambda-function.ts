@@ -62,6 +62,7 @@ export default class LambdaFunction extends Construct {
           }
         : {}),
       environment: {
+        AUTH_DOMAIN: Environment.AUTH_DOMAIN,
         ...(props.environmentVariablesOverride ?? {}),
       },
       ...(securityGroup !== null ? { securityGroups: [securityGroup] } : {}),

@@ -86,10 +86,6 @@ export class OAuthApi extends Construct {
         logGroupName: `${Environment.STACK_NAME}/lambda/oauth-api/${props.path}`,
         retention: EnvironmentConfig.lambdaLogRetentionDays,
       }),
-      environmentVariablesOverride: {
-        AUTH_DOMAIN: Environment.AUTH_DOMAIN,
-        ...(props.lambdaFunction.environmentVariablesOverride ?? {}),
-      },
     };
     const lambdaProps =
       props.vpcRequired === true
