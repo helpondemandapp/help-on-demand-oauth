@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import * as awsLambda from 'aws-cdk-lib/aws-lambda';
 
-export const NodeVersions = [20, 22] as const;
+export const NodeVersions = [20, 22, 24] as const;
 export type NodeVersion = (typeof NodeVersions)[number];
 
 export const Environment = z
@@ -26,6 +26,7 @@ export const Environment = z
         ]
       )
     ),
+    AWS_PARTITION: z.enum(['gov-cloud', 'commercial']),
   })
   .parse(process.env);
 

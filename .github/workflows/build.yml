@@ -1,31 +1,46 @@
 name: Build and Deploy to AWS
 on:
+  push:
+    branches:
+      - 'dev/HOD-**'
   workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        description: The target deployment environment
 
 permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+  cancel-in-progress: false
+
 jobs:
-  build:
+  build-gov-cloud:
     runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
 
     steps:
       ### Setup ###
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         name: Checkout code
-      - uses: aws-actions/configure-aws-credentials@v5
+      - uses: aws-actions/configure-aws-credentials@v6
         name: Configure AWS credentials
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_GOV }}
+          aws-region: ${{ vars.AWS_REGION_GOV }}
       - name: Setup Node.JS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: ${{ vars.NODE_VERSION }}
+          node-version-file: .node-version
       - name: Add Account ID to Environment
         run: |-
           echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)" >> $GITHUB_ENV
+      - name: Add Node Version to Environment
+        run: |-
+          echo "NODE_VERSION=$(tr -cd '0-9' < .node-version)" >> $GITHUB_ENV
       ### Build Source ###
       ### Build Lambdas ###
       - name: Install Lambda Dependencies
@@ -60,8 +75,8 @@ jobs:
       - name: Deploy CDK
         working-directory: ./cdk
         env:
-          STACK_NAME: ''
-          NODE_VERSION: ${{ vars.NODE_VERSION }}
+          STACK_NAME: 'hod-oauth'
+          AWS_PARTITION: 'gov-cloud'
         run: |-
           npm run cdk -- bootstrap
           npm run cdk -- synth
