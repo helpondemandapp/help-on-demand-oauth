@@ -57,6 +57,16 @@ export class OAuthApi extends Construct {
         functionFolder: 'oauth-api/register',
       },
     });
+
+    this.addResource({
+      path: 'authorize',
+      methods: ['GET'],
+      networks: props.networks,
+      globals: props.globals,
+      lambdaFunction: {
+        functionFolder: 'oauth-api/authorize',
+      },
+    });
   }
 
   private addResource(props: ApiResourceProps) {
