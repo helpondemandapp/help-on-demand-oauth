@@ -54,6 +54,7 @@ const GovCloudEnv = CommonEnv.extend({
 
 const CommercialEnv = CommonEnv.extend({
   AWS_PARTITION: z.literal('commercial'),
+  CERT_ARN: z.string().trim().nonempty(),
 });
 
 const EnvironmentSchema = z.discriminatedUnion('AWS_PARTITION', [GovCloudEnv, CommercialEnv]);
