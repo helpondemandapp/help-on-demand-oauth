@@ -1,0 +1,68 @@
+name: Build and Deploy to AWS
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      ### Setup ###
+      - uses: actions/checkout@v5
+        name: Checkout code
+      - uses: aws-actions/configure-aws-credentials@v5
+        name: Configure AWS credentials
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Setup Node.JS
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ vars.NODE_VERSION }}
+      - name: Add Account ID to Environment
+        run: |-
+          echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)" >> $GITHUB_ENV
+      ### Build Source ###
+      ### Build Lambdas ###
+      - name: Install Lambda Dependencies
+        working-directory: ./lambda-functions
+        run: npm ci
+      - name: Compile Lambda Typescript
+        working-directory: ./lambda-functions
+        run: npm run build
+      - name: Create package.json For Lambda Functions
+        working-directory: ./lambda-functions
+        run: node copy-package.js
+      - name: Move Lambda Functions to CDK Directory
+        run: |-
+          mkdir -p ./cdk/code/lambda/functions
+          mkdir -p ./cdk/code/lambda/common/nodejs
+          cp -r ./lambda-functions/dist/src/functions/* ./cdk/code/lambda/functions
+          cp -r ./lambda-functions/dist/src/common/* ./cdk/code/lambda/common/nodejs
+      - name: Create Runtime Dependencies for Lambda Functions
+        env:
+          NODE_ENV: production
+        run: |-
+          mkdir -p ./cdk/code/lambda/functions/runtime-deps/nodejs
+          cp ./lambda-functions/package.json ./cdk/code/lambda/functions/runtime-deps/nodejs
+          cp ./lambda-functions/package-lock.json ./cdk/code/lambda/functions/runtime-deps/nodejs
+          cd ./cdk/code/lambda/functions/runtime-deps/nodejs
+          npm ci
+          rm package.json package-lock.json
+      ### Deploy Cloud ###
+      - name: Install CDK Dependencies
+        working-directory: ./cdk
+        run: npm ci
+      - name: Deploy CDK
+        working-directory: ./cdk
+        env:
+          STACK_NAME: ''
+          NODE_VERSION: ${{ vars.NODE_VERSION }}
+        run: |-
+          npm run cdk -- bootstrap
+          npm run cdk -- synth
+          npm run cdk -- deploy --require-approval never

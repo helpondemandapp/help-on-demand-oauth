@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.157",
+    "@types/node": "^22",
+    "typescript": "~5.9.3"
+  },
+  "dependencies": {
+    "zod": "^4.1.12"
+  }
+}
