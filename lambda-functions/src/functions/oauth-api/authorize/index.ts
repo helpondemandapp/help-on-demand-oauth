@@ -1,26 +1,16 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { parseCookies } from '/opt/nodejs/protocol/http.js';
-import { Environment } from '/opt/nodejs/config/env.js';
+import { apiRequestLambdaWrapper, parseCookieHeader, ResponseBuilder } from '/opt/nodejs/protocol/http.js';
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const cookies = parseCookies(event);
-  const sessionCookie = cookies.session ?? null;
+export const handler = apiRequestLambdaWrapper({
+  callback: async (event) => {
+    const res = new ResponseBuilder();
 
-  if (sessionCookie === null) {
-    return {
-      statusCode: 302,
-      headers: {
-        Location: `https://${Environment.AUTH_DOMAIN}/login`,
-      },
-      body: '',
-    };
-  }
+    const cookies = parseCookieHeader(event);
+    const sessionIdCookie = cookies.get('sessionId');
 
-  return {
-    statusCode: 200,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ message: 'Hello world!' }),
-  };
-};
+    if (sessionIdCookie === null) {
+      return res.redirect(`/login`);
+    }
+
+    return res.status(200).json({ message: 'Hello world!' });
+  },
+});

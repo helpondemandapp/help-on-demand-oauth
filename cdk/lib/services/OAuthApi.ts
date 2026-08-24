@@ -16,6 +16,7 @@ type OAuthApiProps = {
 type ApiResourceProps = OAuthApiProps & {
   path: string;
   methods: [string, ...string[]];
+  parentResource: apiGateway.IResource;
   lambdaFunction: {
     functionFolder: string;
     timeout?: Duration;
@@ -29,6 +30,7 @@ type ApiResourceProps = OAuthApiProps & {
 
 export class OAuthApi extends Construct {
   public readonly api: apiGateway.RestApi;
+  private readonly apiLogGroup: awsLogs.LogGroup;
   constructor(scope: Construct, id: string, props: OAuthApiProps) {
     super(scope, id);
 
@@ -36,8 +38,15 @@ export class OAuthApi extends Construct {
       endpointTypes: [apiGateway.EndpointType.REGIONAL], // GovCloud APIs must explicitly set the endpoint type to REGIONAL
       deployOptions: { stageName: 'prod' },
     });
+    const apiResource = this.api.root.addResource('api');
+
+    this.apiLogGroup = new awsLogs.LogGroup(this, `ApiLogGroup`, {
+      logGroupName: `${Environment.STACK_NAME}/lambda/oauth-api/api-handler`,
+      retention: EnvironmentConfig.lambdaLogRetentionDays,
+    });
 
     this.addResource({
+      parentResource: apiResource,
       path: '.well-known',
       isProxy: true,
       methods: ['GET'],
@@ -49,6 +58,7 @@ export class OAuthApi extends Construct {
     });
 
     this.addResource({
+      parentResource: apiResource,
       path: 'register',
       methods: ['POST'],
       networks: props.networks,
@@ -59,6 +69,7 @@ export class OAuthApi extends Construct {
     });
 
     this.addResource({
+      parentResource: apiResource,
       path: 'authorize',
       methods: ['GET'],
       networks: props.networks,
@@ -84,7 +95,7 @@ export class OAuthApi extends Construct {
     const resourceId = normalizedPath.charAt(0).toUpperCase() + normalizedPath.slice(1);
 
     const construct = new Construct(this, resourceId);
-    const resources = [this.api.root.addResource(props.path)];
+    const resources = [props.parentResource.addResource(props.path)];
     if (props.isProxy) {
       resources.push(resources[0]!.addResource('{proxy+}'));
     }
@@ -92,10 +103,7 @@ export class OAuthApi extends Construct {
       ...props.lambdaFunction,
       layers: props.globals.lambdaLayers,
       role: props.globals.lambdaExecutionRole,
-      logGroup: new awsLogs.LogGroup(construct, `LogGroup`, {
-        logGroupName: `${Environment.STACK_NAME}/lambda/oauth-api/${props.path}`,
-        retention: EnvironmentConfig.lambdaLogRetentionDays,
-      }),
+      logGroup: this.apiLogGroup,
     };
     const lambdaProps =
       props.vpcRequired === true

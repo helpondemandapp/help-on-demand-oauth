@@ -1,13 +1,5 @@
-import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { Environment } from '/opt/nodejs/config/env.js';
-
-const response = (content: Record<string, unknown>) => ({
-  statusCode: 200,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(content),
-});
+import { apiRequestLambdaWrapper, ResponseBuilder } from '/opt/nodejs/protocol/http.js';
 
 const oauthAuthorizationServer = async () => ({
   issuer: `https://${Environment.AUTH_DOMAIN}`,
@@ -19,18 +11,15 @@ const oauthAuthorizationServer = async () => ({
   code_challenge_methods_supported: ['S256'],
 });
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  switch (event.path) {
-    case '/.well-known/oauth-authorization-server':
-      return response(await oauthAuthorizationServer());
-  }
-  return {
-    statusCode: 404,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      error: 'Not Found',
-    }),
-  };
-};
+export const handler = apiRequestLambdaWrapper({
+  callback: async (event) => {
+    const res = new ResponseBuilder();
+
+    switch (event.path) {
+      case '/.well-known/oauth-authorization-server':
+        return res.status(200).json(await oauthAuthorizationServer());
+    }
+
+    return res.status(404).json({ error: 'Not Found' });
+  },
+});

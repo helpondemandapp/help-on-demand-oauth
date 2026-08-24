@@ -112,7 +112,7 @@ jobs:
   deploy-commercial:
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
-    needs: [ build-gov-cloud ]
+    needs: [build-gov-cloud]
     outputs:
       deploy-bucket: ${{ steps.stack-outputs.outputs.deploy-bucket }}
       dist-id: ${{ steps.stack-outputs.outputs.dist-id }}

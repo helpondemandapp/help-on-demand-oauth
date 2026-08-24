@@ -44,10 +44,6 @@ export class CommercialStack extends cdk.Stack {
       code: cloudfront.FunctionCode.fromFile({ filePath: 'cloudFrontFunctions/spa-rewrite.js' }),
     });
 
-    const apiRewriteFunction = new cloudfront.Function(this, 'ApiRewriteFunction', {
-      code: cloudfront.FunctionCode.fromFile({ filePath: 'cloudFrontFunctions/api-rewrite.js' }),
-    });
-
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessIdentity(deploymentBucket, {
@@ -73,12 +69,6 @@ export class CommercialStack extends cdk.Stack {
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
           originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
-          functionAssociations: [
-            {
-              function: apiRewriteFunction,
-              eventType: cloudfront.FunctionEventType.VIEWER_REQUEST,
-            },
-          ],
         },
         '.well-known/*': {
           origin: new origins.HttpOrigin(backendInvokeUrl.host, {
