@@ -46,7 +46,7 @@ export class OAuthApi extends Construct {
     });
 
     this.addResource({
-      parentResource: apiResource,
+      parentResource: this.api.root,
       path: '.well-known',
       isProxy: true,
       methods: ['GET'],
