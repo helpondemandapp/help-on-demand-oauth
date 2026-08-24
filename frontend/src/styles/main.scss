@@ -1,0 +1,34 @@
+@import 'custom';
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('../../public/fonts/Roboto-Regular.ttf') format('ttf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+a {
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+$hod-accessory: #c05131;
+$hod-wht: white;
+
+.btn-hod-primary {
+  @include button-variant(
+    $background: $hod-accessory,
+    $border: $hod-accessory,
+    $color: $hod-wht,
+    $hover-background: scale-color($hod-accessory, $lightness: -15%),
+    $hover-border: scale-color($hod-accessory, $lightness: -15%),
+    $active-background: scale-color($hod-accessory, $lightness: -15%),
+    $active-border: scale-color($hod-accessory, $lightness: -15%)
+  );
+}
