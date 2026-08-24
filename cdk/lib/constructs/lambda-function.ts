@@ -8,6 +8,7 @@ import { Duration } from 'aws-cdk-lib';
 import LambdaLayers from './lambda-layers';
 import { SecurityGroup } from 'aws-cdk-lib/aws-ec2';
 import Networks from '../services/Networks';
+import { DynamoDBTableNames } from '../services/DynamoDatabase';
 
 const LambdaDefaults = {
   TIMEOUT: Duration.seconds(30),
@@ -62,6 +63,7 @@ export default class LambdaFunction extends Construct {
           }
         : {}),
       environment: {
+        ...DynamoDBTableNames,
         AUTH_DOMAIN: Environment.AUTH_DOMAIN,
         ...(props.environmentVariablesOverride ?? {}),
       },
