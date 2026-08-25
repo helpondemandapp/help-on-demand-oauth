@@ -8,7 +8,7 @@ const RequestSchema = z.object({
   password: z.string().trim().nonempty('password is required'),
 });
 
-export const authenticate = apiRequestLambdaWrapper({
+export const handler = apiRequestLambdaWrapper({
   callback: async (event) => {
     const res = new ResponseBuilder();
     const safeBody = RequestSchema.safeParse(JSON.parse(event.body ?? '{}'));
