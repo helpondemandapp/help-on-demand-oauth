@@ -29,3 +29,12 @@ export const ConsentRequestSchema = z.object({
   ttl: z.number().int().nonnegative(),
 });
 export type ConsentRequest = z.infer<typeof ConsentRequestSchema>;
+
+export const UserSessionSchema = z.object({
+  sessionId: z.string().trim().nonempty(),
+  userId: z.string().trim().nonempty(),
+  createdAtUTCMillis: z.number().int().nonnegative(),
+  expiresAtUTCMillis: z.number().int().nonnegative(),
+  ttl: z.number().int().nonnegative(),
+});
+export type UserSession = z.infer<typeof UserSessionSchema>;

@@ -7,6 +7,7 @@ type TableName = `OAuth${Uppercase<string>}${string}`;
 export const DynamoDBTableNames = {
   OAUTH_CLIENTS_TABLE_NAME: 'OAuthClients',
   CONSENT_REQUESTS_TABLE_NAME: 'OAuthConsentRequests',
+  SESSIONS_TABLE_NAME: 'OAuthSessions',
 } as const satisfies Record<`${Uppercase<string>}_TABLE_NAME`, TableName>;
 export type DynamoDBTableName = (typeof DynamoDBTableNames)[keyof typeof DynamoDBTableNames];
 

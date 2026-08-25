@@ -1,7 +1,9 @@
-import { apiRequestLambdaWrapper, ResponseBuilder } from '/opt/nodejs/protocol/http.js';
+import { apiRequestLambdaWrapper, httpOnlyCookie, ResponseBuilder } from '/opt/nodejs/protocol/http.js';
 import { z } from 'zod';
 import { setContext } from '/opt/nodejs/logging/wideEvent.js';
 import { getHODToken } from '/opt/nodejs/data/hodAPI/hodTokens.js';
+import { hodMe } from '/opt/nodejs/data/hodAPI/hodAccounts.js';
+import { createNewSession } from '/opt/nodejs/data/dynamodb/sessions.js';
 
 const RequestSchema = z.object({
   username: z.string().trim().toLowerCase().nonempty('username is required'),
@@ -22,7 +24,18 @@ export const handler = apiRequestLambdaWrapper({
       return res.status(hodTokenResponse.statusCode).json({ error: hodTokenResponse.errorMessage });
     }
     const hodToken = hodTokenResponse.tokenData;
-    setContext('tokenLength', hodToken.access_token.length);
-    return res.status(500).json({ error: 'Not implemented' });
+    const hodUser = await hodMe(hodToken.access_token);
+    setContext('foundUser', hodUser);
+    if (hodUser.hasExpiredPassword) {
+      return res.status(403).json({ error: 'Password has expired' });
+    }
+    const session = await createNewSession(hodUser.id);
+    return res
+      .setCookie(
+        'sessionId',
+        session.sessionId,
+        httpOnlyCookie(Math.floor((session.expiresAtUTCMillis - session.createdAtUTCMillis) / 1000))
+      )
+      .status(204);
   },
 });
