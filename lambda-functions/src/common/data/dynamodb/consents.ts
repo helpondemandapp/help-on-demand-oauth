@@ -21,7 +21,8 @@ export const findUserConsent = async ({ userId, clientId, scope }: FindConsentPa
       TableName: Environment.CONSENTS_TABLE_NAME,
       ExclusiveStartKey: nextToken ?? undefined,
       IndexName: USER_CLIENT_INDEX_NAME,
-      FilterExpression: '#userId = :userId AND #clientId = :clientId AND #scope = :scope',
+      KeyConditionExpression: '#userId = :userId AND #clientId = :clientId',
+      FilterExpression: '#scope = :scope',
       ExpressionAttributeNames: {
         '#userId': 'userId',
         '#clientId': 'clientId',

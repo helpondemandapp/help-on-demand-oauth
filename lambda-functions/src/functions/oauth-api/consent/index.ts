@@ -52,6 +52,11 @@ const getHandler = async (event: APIGatewayProxyEvent): Promise<ResponseBuilder>
     return res.redirect(`/consent?requestId=${consentRequest.requestId}`);
   }
   setContext('foundConsent', consent);
+  // the most recent consent was denied, so we need to show the consent page again
+  if (!consent.approved) {
+    return res.redirect(`/consent?requestId=${consentRequest.requestId}`);
+  }
+  // todo: create auth code and redirect to the redirect_uri with the code and state
   return new ResponseBuilder().status(500).json({ message: 'Consent found. Auth code not implemented yet.' });
 };
 
