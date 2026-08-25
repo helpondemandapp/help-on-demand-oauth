@@ -3,6 +3,7 @@ import { z } from 'zod';
 const BaseClientSchema = z.object({
   clientId: z.string().trim().nonempty(),
   redirectUris: z.array(z.string().trim().nonempty()).min(1, 'At least one redirect URI is required'),
+  defaultScopes: z.string().trim().default('user:read:email'),
   metadata: z.looseObject({}).optional().default({}),
 });
 
