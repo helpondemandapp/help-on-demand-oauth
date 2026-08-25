@@ -25,6 +25,11 @@ export default class DynamoDatabase extends Construct {
       partitionKey: { type: dynamodb.AttributeType.STRING, name: 'requestId' },
       timeToLiveAttribute: 'ttl',
     });
+
+    this.createTable(DynamoDBTableNames.SESSIONS_TABLE_NAME, {
+      partitionKey: { type: dynamodb.AttributeType.STRING, name: 'sessionId' },
+      timeToLiveAttribute: 'ttl',
+    });
   }
 
   grantReadWrite(grantable: iam.IGrantable) {
