@@ -8,6 +8,7 @@ export const DynamoDBTableNames = {
   OAUTH_CLIENTS_TABLE_NAME: 'OAuthClients',
   CONSENT_REQUESTS_TABLE_NAME: 'OAuthConsentRequests',
   SESSIONS_TABLE_NAME: 'OAuthSessions',
+  CONSENTS_TABLE_NAME: 'OAuthConsents',
 } as const satisfies Record<`${Uppercase<string>}_TABLE_NAME`, TableName>;
 export type DynamoDBTableName = (typeof DynamoDBTableNames)[keyof typeof DynamoDBTableNames];
 
@@ -29,6 +30,19 @@ export default class DynamoDatabase extends Construct {
     this.createTable(DynamoDBTableNames.SESSIONS_TABLE_NAME, {
       partitionKey: { type: dynamodb.AttributeType.STRING, name: 'sessionId' },
       timeToLiveAttribute: 'ttl',
+    });
+
+    this.createTable(DynamoDBTableNames.CONSENTS_TABLE_NAME, {
+      partitionKey: { type: dynamodb.AttributeType.STRING, name: 'consentId' },
+      timeToLiveAttribute: 'ttl',
+      globalSecondaryIndices: [
+        {
+          indexName: 'idx-userIdClientId',
+          partitionKey: { type: dynamodb.AttributeType.STRING, name: 'userId' },
+          sortKey: { type: dynamodb.AttributeType.STRING, name: 'clientId' },
+          projectionType: dynamodb.ProjectionType.ALL,
+        },
+      ],
     });
   }
 

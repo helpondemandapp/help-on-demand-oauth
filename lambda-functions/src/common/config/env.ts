@@ -7,6 +7,7 @@ export const Environment = z
     CONSENT_REQUESTS_TABLE_NAME: z.string().nonempty(),
     BWS_WEB_BASE_URL: z.string().trim().toLowerCase().nonempty(),
     SESSIONS_TABLE_NAME: z.string().nonempty(),
+    CONSENTS_TABLE_NAME: z.string().trim().toLowerCase().nonempty(),
   })
   .parse(process.env);
 

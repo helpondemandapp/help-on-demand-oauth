@@ -11,6 +11,7 @@ import { setContext } from '/opt/nodejs/logging/wideEvent.js';
 import { getOauthClient } from '/opt/nodejs/data/dynamodb/clients.js';
 import { findSessionById } from '/opt/nodejs/data/dynamodb/sessions.js';
 import { normalizeScopeString } from '/opt/nodejs/core/scopes.js';
+import { findUserConsent } from '/opt/nodejs/data/dynamodb/consents.js';
 
 const GetRequestParametersSchema = z.object({
   requestId: z.string({ error: 'requestId is required' }).trim().nonempty(),
@@ -46,8 +47,12 @@ const getHandler = async (event: APIGatewayProxyEvent): Promise<ResponseBuilder>
   setContext('userId', session.userId);
   const requestedScopes = normalizeScopeString(consentRequest.scope ?? client.defaultScopes);
   setContext('requestedScopes', requestedScopes);
-  // todo find the consent
-  return new ResponseBuilder().status(500).json({ message: 'GET request received' });
+  const consent = await findUserConsent({ userId: session.userId, clientId: client.clientId, scope: requestedScopes });
+  if (consent === null) {
+    return res.redirect(`/consent?requestId=${consentRequest.requestId}`);
+  }
+  setContext('foundConsent', consent);
+  return new ResponseBuilder().status(500).json({ message: 'Consent found. Auth code not implemented yet.' });
 };
 
 const postHandler = async (_event: APIGatewayProxyEvent): Promise<ResponseBuilder> => {

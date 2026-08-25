@@ -39,3 +39,15 @@ export const UserSessionSchema = z.object({
   ttl: z.number().int().nonnegative(),
 });
 export type UserSession = z.infer<typeof UserSessionSchema>;
+
+export const UserConsentSchema = z.object({
+  consentId: z.string().trim().nonempty(),
+  userId: z.string().trim().nonempty(),
+  clientId: z.string().trim().nonempty(),
+  scope: z.string().trim().nonempty(),
+  createdAtUTCMillis: z.number().int().nonnegative(),
+  expiresAtUTCMillis: z.number().int().nonnegative(),
+  ttl: z.number().int().nonnegative(),
+  approved: z.boolean(),
+});
+export type UserConsent = z.infer<typeof UserConsentSchema>;
