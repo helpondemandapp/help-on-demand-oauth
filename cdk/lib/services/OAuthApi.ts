@@ -37,6 +37,7 @@ export class OAuthApi extends Construct {
     this.api = new apiGateway.RestApi(this, 'OAuthApi', {
       endpointTypes: [apiGateway.EndpointType.REGIONAL], // GovCloud APIs must explicitly set the endpoint type to REGIONAL
       deployOptions: { stageName: 'prod' },
+      description: 'OAuth API for handling generating tokens for external/internal connections to Help on Demand',
     });
     const apiResource = this.api.root.addResource('api');
 
@@ -76,6 +77,17 @@ export class OAuthApi extends Construct {
       globals: props.globals,
       lambdaFunction: {
         functionFolder: 'oauth-api/authorize',
+      },
+    });
+
+    this.addResource({
+      parentResource: apiResource,
+      path: 'authenticate',
+      methods: ['POST'],
+      networks: props.networks,
+      globals: props.globals,
+      lambdaFunction: {
+        functionFolder: 'oauth-api/authenticate',
       },
     });
   }
