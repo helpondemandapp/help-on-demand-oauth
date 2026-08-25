@@ -39,7 +39,7 @@ export const getHODToken = async (
         return { error: true, errorMessage: 'Unable to log in', statusCode: 500 };
       }
       const errorResponse = safeParseError.data;
-      return { error: true, errorMessage: errorResponse.error, statusCode: 400 };
+      return { error: true, errorMessage: errorResponse.error_description, statusCode: 400 };
     } catch (e) {
       setContext('hodResponseError', e);
       return { error: true, errorMessage: 'Unable to log in', statusCode: 500 };
