@@ -28,7 +28,6 @@ const CommonEnv = z.object({
     )
   ),
   AUTH_DOMAIN: z.string().regex(/^.+\.bigwavesystems\.com/),
-  BWS_WEB_BASE_URL: z.string().trim().toLowerCase().nonempty(),
 });
 
 const GovCloudEnv = CommonEnv.extend({
@@ -51,6 +50,7 @@ const GovCloudEnv = CommonEnv.extend({
     },
     z.array(z.array(z.string().trim().min(1)).length(3)).min(1)
   ),
+  BWS_WEB_BASE_URL: z.string().trim().toLowerCase().nonempty(),
 });
 
 const CommercialEnv = CommonEnv.extend({
