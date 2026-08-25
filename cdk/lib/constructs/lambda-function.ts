@@ -3,10 +3,10 @@ import * as awsLambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import { SecurityGroup } from 'aws-cdk-lib/aws-ec2';
 import { Environment, NodeVersionToRuntime } from '../library';
 import { Duration } from 'aws-cdk-lib';
 import LambdaLayers from './lambda-layers';
-import { SecurityGroup } from 'aws-cdk-lib/aws-ec2';
 import Networks from '../services/Networks';
 import { DynamoDBTableNames } from '../services/DynamoDatabase';
 
@@ -65,7 +65,11 @@ export default class LambdaFunction extends Construct {
       environment: {
         ...DynamoDBTableNames,
         AUTH_DOMAIN: Environment.AUTH_DOMAIN,
-        BWS_WEB_BASE_URL: Environment.BWS_WEB_BASE_URL,
+        ...(Environment.AWS_PARTITION === 'gov-cloud'
+          ? {
+              BWS_WEB_BASE_URL: Environment.BWS_WEB_BASE_URL,
+            }
+          : {}),
         ...(props.environmentVariablesOverride ?? {}),
       },
       ...(securityGroup !== null ? { securityGroups: [securityGroup] } : {}),

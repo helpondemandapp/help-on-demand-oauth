@@ -1,6 +1,7 @@
 import { apiRequestLambdaWrapper, ResponseBuilder } from '/opt/nodejs/protocol/http.js';
 import { z } from 'zod';
 import { setContext } from '/opt/nodejs/logging/wideEvent.js';
+import { getHODToken } from '/opt/nodejs/data/hodAPI/hodTokens.js';
 
 const RequestSchema = z.object({
   username: z.string().trim().toLowerCase().nonempty('username is required'),
@@ -16,6 +17,12 @@ export const authenticate = apiRequestLambdaWrapper({
     }
     const request = safeBody.data;
     setContext('username', request.username);
+    const hodTokenResponse = await getHODToken(request);
+    if (hodTokenResponse.error) {
+      return res.status(hodTokenResponse.statusCode).json({ error: hodTokenResponse.errorMessage });
+    }
+    const hodToken = hodTokenResponse.tokenData;
+    setContext('tokenLength', hodToken.access_token.length);
     return res.status(500).json({ error: 'Not implemented' });
   },
 });
