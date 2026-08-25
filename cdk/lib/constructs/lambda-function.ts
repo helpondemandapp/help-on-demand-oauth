@@ -65,6 +65,7 @@ export default class LambdaFunction extends Construct {
       environment: {
         ...DynamoDBTableNames,
         AUTH_DOMAIN: Environment.AUTH_DOMAIN,
+        BWS_WEB_BASE_URL: Environment.BWS_WEB_BASE_URL,
         ...(props.environmentVariablesOverride ?? {}),
       },
       ...(securityGroup !== null ? { securityGroups: [securityGroup] } : {}),

@@ -5,6 +5,7 @@ export const Environment = z
     AUTH_DOMAIN: z.string().nonempty(),
     OAUTH_CLIENTS_TABLE_NAME: z.string().nonempty(),
     CONSENT_REQUESTS_TABLE_NAME: z.string().nonempty(),
+    BWS_WEB_BASE_URL: z.string().trim().toLowerCase().nonempty(),
   })
   .parse(process.env);
 

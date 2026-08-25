@@ -77,10 +77,10 @@ const Login = () => {
         <Col xs={12}>
           <Row className={'justify-content-between mx-0 mx-md-4'}>
             <Col xs={'auto'}>
-              <a href={'https://app.bigwavesystems.com/forgot_username'}>Forgot Username?</a>
+              <a href={`${import.meta.env.VITE_WEB_APP_BASE_URL}/forgot_username`}>Forgot Username?</a>
             </Col>
             <Col xs={'auto'}>
-              <a href={'https://app.bigwavesystems.com/forgot_password'}>Forgot Password?</a>
+              <a href={`${import.meta.env.VITE_WEB_APP_BASE_URL}/forgot_password`}>Forgot Password?</a>
             </Col>
           </Row>
         </Col>

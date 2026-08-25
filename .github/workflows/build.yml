@@ -81,6 +81,7 @@ jobs:
           PRIVATE_SUBNET_IDS: ${{ vars.PRIVATE_SUBNETS }}
           AUTH_DOMAIN: ${{ vars.SERVER_HOST }}
           ENVIRONMENT_NAME: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+          BWS_WEB_BASE_URL: ${{ vars.BWS_WEB_BASE_URL }}
         run: |-
           npm run cdk -- bootstrap
           npm run cdk -- synth
@@ -101,6 +102,8 @@ jobs:
           node-version-file: .node-version
       - name: Build Frontend
         working-directory: ./frontend
+        env:
+          VITE_WEB_APP_BASE_URL: ${{ vars.BWS_WEB_BASE_URL }}
         run: |-
           npm ci
           node --run build
