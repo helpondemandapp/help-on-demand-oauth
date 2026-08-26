@@ -34,7 +34,7 @@ const fetchUserRoles = async (userId: string) => {
   return z.array(AspNetRoleSchema).parse(recordset);
 };
 
-type UserWithRoles = BaseUser & {
+export type UserWithRoles = BaseUser & {
   Roles: AspNetRole[];
 };
 

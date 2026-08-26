@@ -1,5 +1,11 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { lambdaHandler, setContext } from '/opt/nodejs/logging/wideEvent.js';
+import { getConsentRequestFromParameters } from '/opt/nodejs/core/consentRequests.js';
+import { normalizeScopeString, separateScopeString } from '/opt/nodejs/core/scopes.js';
+import { getScopeDescriptionsForNames } from '/opt/nodejs/data/sql/scopes.js';
+import { fetchUserWithRoles, type UserWithRoles } from '/opt/nodejs/data/sql/users.js';
+import { findSessionById } from '/opt/nodejs/data/dynamodb/sessions.js';
+import { openSql } from '/opt/nodejs/data/sql/db.js';
 
 class CaseInsensitiveStringMap {
   private readonly map: ReadonlyMap<string, string>;
@@ -181,5 +187,50 @@ export const apiRequestLambdaWrapper = ({ callback }: ApiRequestLambdaWrapperPar
       res.addCodeToContext();
       return res.build();
     }
+  });
+};
+
+type ApiRequestWithUserWrapperParams = {
+  callback: (event: APIGatewayProxyEvent, userId: UserWithRoles, context: Context) => Promise<ResponseBuilder>;
+  onUnauthorized: (event: APIGatewayProxyEvent, res: ResponseBuilder, context: Context) => Promise<ResponseBuilder>;
+};
+
+export const redirectToLoginOnUnAuthorized = () => {
+  return async (event: APIGatewayProxyEvent, res: ResponseBuilder, _context: Context) => {
+    const requestId = event.queryStringParameters?.requestId ?? null;
+    const loginUrl = requestId !== null ? `/login?requestId=${encodeURIComponent(requestId)}` : '/login';
+    return res.redirect(loginUrl, 302);
+  };
+};
+
+export const error401OnUnauthorized = () => {
+  return async (_event: APIGatewayProxyEvent, res: ResponseBuilder, _context: Context) => {
+    return res.status(401).json({ error: 'Unauthorized' });
+  };
+};
+
+export const apiRequestWithUserLambdaWrapper = ({ callback, onUnauthorized }: ApiRequestWithUserWrapperParams) => {
+  return apiRequestLambdaWrapper({
+    callback: async (event, context) => {
+      const res = new ResponseBuilder();
+      await openSql();
+      const cookies = parseCookieHeader(event);
+      const sessionId = cookies.get('sessionId');
+      if (sessionId === null) {
+        return await onUnauthorized(event, res, context);
+      }
+      const session = await findSessionById(sessionId);
+      if (session === null) {
+        res.setCookie('sessionId', '', httpOnlyCookie(0));
+        return await onUnauthorized(event, res, context);
+      }
+      const user = await fetchUserWithRoles(session.userId);
+      if (user === null) {
+        res.setCookie('sessionId', '', httpOnlyCookie(0));
+        return await onUnauthorized(event, res, context);
+      }
+      setContext('sessionUser', user);
+      return callback(event, user, context);
+    },
   });
 };
