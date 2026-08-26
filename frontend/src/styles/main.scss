@@ -32,3 +32,14 @@ $hod-wht: white;
     $active-border: scale-color($hod-accessory, $lightness: -15%)
   );
 }
+
+.scope-list-item {
+  padding: var(--bs-card-spacer-y) var(--bs-card-spacer-x);
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  &:last-child {
+    border-bottom: none;
+  }
+}
+.no-text-decoration {
+  text-decoration: none !important;
+}

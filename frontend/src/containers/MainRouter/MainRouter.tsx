@@ -4,6 +4,7 @@ import { Alert } from 'react-bootstrap';
 import RequestIdProvider from '@/contexts/RequestId';
 
 const Login = React.lazy(() => import('@/containers/Login/Login.tsx'));
+const Consent = React.lazy(() => import('@/containers/Consent/Consent.tsx'));
 
 const MainRouter = () => {
   const [params] = useSearchParams();
@@ -30,6 +31,14 @@ const MainRouter = () => {
           element={
             <React.Suspense>
               <Login />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path={'/consent'}
+          element={
+            <React.Suspense>
+              <Consent />
             </React.Suspense>
           }
         />
