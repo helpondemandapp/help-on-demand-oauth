@@ -4,7 +4,13 @@ const BaseClientSchema = z.object({
   clientId: z.string().trim().nonempty(),
   redirectUris: z.array(z.string().trim().nonempty()).min(1, 'At least one redirect URI is required'),
   defaultScopes: z.string().trim().default('user:read:email'),
-  metadata: z.looseObject({}).optional().default({}),
+  metadata: z
+    .looseObject({
+      name: z.string().optional(),
+      hodCarrierId: z.int().optional(),
+    })
+    .optional()
+    .default({}),
 });
 
 const PrivateClientSchema = BaseClientSchema.extend({
@@ -17,6 +23,7 @@ const PublicClientSchema = BaseClientSchema.extend({
 });
 
 export const ClientSchema = z.discriminatedUnion('clientType', [PrivateClientSchema, PublicClientSchema]);
+export type Client = z.infer<typeof ClientSchema>;
 
 export const ConsentRequestSchema = z.object({
   requestId: z.string().trim().nonempty(),

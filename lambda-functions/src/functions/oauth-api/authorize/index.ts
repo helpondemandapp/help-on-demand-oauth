@@ -2,6 +2,9 @@ import { apiRequestLambdaWrapper, parseCookieHeader, ResponseBuilder } from '/op
 import { z } from 'zod';
 import { createNewConsentRequest } from '/opt/nodejs/data/dynamodb/consentRequests.js';
 import { getOauthClient } from '/opt/nodejs/data/dynamodb/clients.js';
+import { findSessionById } from '/opt/nodejs/data/dynamodb/sessions.js';
+import { findUserConsent } from '/opt/nodejs/data/dynamodb/consents.js';
+import { normalizeScopeString } from '/opt/nodejs/core/scopes.js';
 
 const QueryParametersSchema = z.object({
   client_id: z.string().nonempty('client_id is required'),
@@ -47,19 +50,43 @@ export const handler = apiRequestLambdaWrapper({
       }
     }
 
+    const scope = normalizeScopeString(params.scope ?? client.defaultScopes);
+    // todo add scope validation
+
     const cookies = parseCookieHeader(event);
     const sessionId = cookies.get('sessionId');
     if (sessionId === null) {
       const request = await createNewConsentRequest({
         clientId: client.clientId,
         redirectUri: params.redirect_uri,
-        scope: params.scope ?? null,
+        scope: params.scope,
         state: params.state ?? null,
         codeChallenge: codeChallenge,
       });
       return res.redirect(`/login?requestId=${request.requestId}`);
     }
-    // todo use case: user is logged in but has not consented
+    const session = await findSessionById(sessionId);
+    if (session === null) {
+      const request = await createNewConsentRequest({
+        clientId: client.clientId,
+        redirectUri: params.redirect_uri,
+        scope: params.scope,
+        state: params.state ?? null,
+        codeChallenge: codeChallenge,
+      });
+      return res.redirect(`/login?requestId=${request.requestId}`);
+    }
+    const consent = await findUserConsent({ userId: session.userId, clientId: client.clientId, scope });
+    if (consent === null || !consent.approved) {
+      const request = await createNewConsentRequest({
+        clientId: client.clientId,
+        redirectUri: params.redirect_uri,
+        scope: params.scope,
+        state: params.state ?? null,
+        codeChallenge: codeChallenge,
+      });
+      return res.redirect(`/consent?requestId=${request.requestId}`);
+    }
     // todo use case: user is logged in and has consented
     return res.status(200).json({ message: 'Hello world!' });
   },

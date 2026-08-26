@@ -101,6 +101,17 @@ export class OAuthApi extends Construct {
         functionFolder: 'oauth-api/consent',
       },
     });
+
+    this.addResource({
+      parentResource: apiResource,
+      path: 'consent-request',
+      methods: ['GET'],
+      networks: props.networks,
+      globals: props.globals,
+      lambdaFunction: {
+        functionFolder: 'oauth-api/consent-request',
+      },
+    });
   }
 
   private addResource(props: ApiResourceProps) {

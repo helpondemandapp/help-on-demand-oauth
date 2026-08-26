@@ -15,3 +15,14 @@ export const normalizeScopeString = (scope: string): string => {
     .sort()
     .join(' ');
 };
+
+export const separateScopeString = (scope: string): string[] => {
+  return Array.from(
+    new Set(
+      scope
+        .split(/\s+/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0)
+    )
+  ).sort();
+};
