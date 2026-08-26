@@ -22,6 +22,7 @@ export const handler = apiRequestWithUserLambdaWrapper({
       scope: requestedScopes,
       clientId: client.clientId,
       approved: false,
+      codeChallenge: consentRequest.codeChallenge ?? null,
     });
     const urlParams = new URLSearchParams({
       error: 'access_denied',

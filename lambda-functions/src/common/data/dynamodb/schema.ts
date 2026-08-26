@@ -56,5 +56,6 @@ export const UserConsentSchema = z.object({
   expiresAtUTCMillis: z.number().int().nonnegative(),
   ttl: z.number().int().nonnegative(),
   approved: z.boolean(),
+  codeChallenge: z.string().nullable().optional(),
 });
 export type UserConsent = z.infer<typeof UserConsentSchema>;
