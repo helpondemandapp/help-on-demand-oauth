@@ -113,6 +113,18 @@ export class OAuthApi extends Construct {
         functionFolder: 'oauth-api/consent-request',
       },
     });
+
+    this.addResource({
+      parentResource: apiResource,
+      path: 'deny',
+      methods: ['GET'],
+      networks: props.networks,
+      globals: props.globals,
+      vpcRequired: true,
+      lambdaFunction: {
+        functionFolder: 'oauth-api/deny',
+      },
+    });
   }
 
   private addResource(props: ApiResourceProps) {
