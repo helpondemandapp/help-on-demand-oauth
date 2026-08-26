@@ -23,6 +23,13 @@ export const handler = apiRequestWithUserLambdaWrapper({
       clientId: client.clientId,
       approved: false,
     });
-    return res.redirect(`${consentRequest.redirectUri}?error=access_denied`);
+    const urlParams = new URLSearchParams({
+      error: 'access_denied',
+    });
+    const state = consentRequest.state ?? null;
+    if (state !== null) {
+      urlParams.append('state', state);
+    }
+    return res.redirect(`${consentRequest.redirectUri}?${urlParams}`);
   },
 });
