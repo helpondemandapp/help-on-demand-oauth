@@ -22,3 +22,18 @@ export const MinCarrierSchema = z.object({
   Guid: z.string().trim().nonempty(),
 });
 export type MinCarrier = z.infer<typeof MinCarrierSchema>;
+
+export const BaseUserSchema = z.object({
+  Id: z.string().trim().nonempty(),
+  FirstName: z.string().trim(),
+  LastName: z.string().trim(),
+  Level: z.number().int(),
+  Email: z.string().trim().nonempty(),
+});
+export type BaseUser = z.infer<typeof BaseUserSchema>;
+
+export const AspNetRoleSchema = z.object({
+  Id: z.string().trim().nonempty(),
+  Name: z.string().trim().nonempty(),
+});
+export type AspNetRole = z.infer<typeof AspNetRoleSchema>;

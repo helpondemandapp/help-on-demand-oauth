@@ -11,6 +11,7 @@ import { normalizeScopeString, separateScopeString } from '/opt/nodejs/core/scop
 import { getMinCarrierById } from '/opt/nodejs/data/sql/carriers.js';
 import { getScopeDescriptionsForNames } from '/opt/nodejs/data/sql/scopes.js';
 import { openSql } from '/opt/nodejs/data/sql/db.js';
+import { fetchUserWithRoles } from '/opt/nodejs/data/sql/users.js';
 
 export const handler = apiRequestLambdaWrapper({
   callback: async (event) => {
@@ -30,7 +31,11 @@ export const handler = apiRequestLambdaWrapper({
     if (session === null) {
       return res.setCookie('sessionId', '', httpOnlyCookie(0)).status(401).json({ error: 'Unauthorized' });
     }
-    setContext('userId', session.userId);
+    const user = await fetchUserWithRoles(session.sessionId);
+    if (user === null) {
+      return res.setCookie('sessionId', '', httpOnlyCookie(0)).status(401).json({ error: 'Unauthorized' });
+    }
+    setContext('sessionUser', user);
     const requestedScopes = normalizeScopeString(consentRequest.scope ?? client.defaultScopes);
     const scopeNames = await getScopeDescriptionsForNames(separateScopeString(requestedScopes));
     let clientName: string = 'A Client';
@@ -48,6 +53,11 @@ export const handler = apiRequestLambdaWrapper({
       scopes: scopeNames,
       client: {
         name: clientName,
+      },
+      user: {
+        email: user.Email,
+        firstName: user.FirstName,
+        lastName: user.LastName,
       },
     });
   },
