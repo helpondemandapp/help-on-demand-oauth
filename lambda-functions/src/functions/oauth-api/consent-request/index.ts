@@ -31,7 +31,7 @@ export const handler = apiRequestLambdaWrapper({
     if (session === null) {
       return res.setCookie('sessionId', '', httpOnlyCookie(0)).status(401).json({ error: 'Unauthorized' });
     }
-    const user = await fetchUserWithRoles(session.sessionId);
+    const user = await fetchUserWithRoles(session.userId);
     if (user === null) {
       return res.setCookie('sessionId', '', httpOnlyCookie(0)).status(401).json({ error: 'Unauthorized' });
     }
