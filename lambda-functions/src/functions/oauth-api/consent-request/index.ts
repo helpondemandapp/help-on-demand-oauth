@@ -16,7 +16,7 @@ export const handler = apiRequestLambdaWrapper({
     const res = new ResponseBuilder();
     const requestResult = await getConsentRequestFromParameters(event.queryStringParameters ?? {});
     if (requestResult.error) {
-      return res.status(requestResult.code).json({ error: requestResult.error });
+      return res.status(requestResult.code).json({ error: requestResult.errorBody });
     }
     const { consentRequest, client } = requestResult;
     const cookies = parseCookieHeader(event);

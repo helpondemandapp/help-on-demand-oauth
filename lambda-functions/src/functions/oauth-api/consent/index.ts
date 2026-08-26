@@ -15,7 +15,7 @@ const getHandler = async (event: APIGatewayProxyEvent): Promise<ResponseBuilder>
   const res = new ResponseBuilder();
   const requestResult = await getConsentRequestFromParameters(event.queryStringParameters ?? {});
   if (requestResult.error) {
-    return res.status(requestResult.code).json({ error: requestResult.error });
+    return res.status(requestResult.code).json({ error: requestResult.errorBody });
   }
   const { client, consentRequest } = requestResult;
   const cookies = parseCookieHeader(event);
