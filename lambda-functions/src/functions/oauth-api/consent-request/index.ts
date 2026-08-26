@@ -10,9 +10,11 @@ import { setContext } from '/opt/nodejs/logging/wideEvent.js';
 import { normalizeScopeString, separateScopeString } from '/opt/nodejs/core/scopes.js';
 import { getMinCarrierById } from '/opt/nodejs/data/sql/carriers.js';
 import { getScopeDescriptionsForNames } from '/opt/nodejs/data/sql/scopes.js';
+import { openSql } from '/opt/nodejs/data/sql/db.js';
 
 export const handler = apiRequestLambdaWrapper({
   callback: async (event) => {
+    await openSql();
     const res = new ResponseBuilder();
     const requestResult = await getConsentRequestFromParameters(event.queryStringParameters ?? {});
     if (requestResult.error) {
