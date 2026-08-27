@@ -21,7 +21,7 @@ export default class GovCloudGlobals extends Construct {
 
     this.lambdaLayers = new LambdaLayers(this, 'LambdaLayers');
 
-    const accountSecrets = ['db_connection_strings'].map((secret) =>
+    const accountSecrets = ['db_connection_strings', 'web_app_auth'].map((secret) =>
       secrets.Secret.fromSecretNameV2(this, `Secret-${secret}`, secret)
     );
 
