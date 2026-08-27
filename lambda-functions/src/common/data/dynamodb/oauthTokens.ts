@@ -38,6 +38,7 @@ export const createOAuthTokenSet = async ({
   const { jwt_audience, jwt_secret } = await fetchSecret('web_app_auth', WebAppAuthSecretSchema);
   const subject = userId.trim().toLowerCase();
   const audience = jwt_audience.trim();
+  const issuer = `https://${Environment.AUTH_DOMAIN}`;
   const accessExpiresAtMillis = now + ACCESS_TOKEN_TTL_SECONDS * 1000;
   let accessToken = '';
   let accessTokenId: string;
@@ -57,6 +58,7 @@ export const createOAuthTokenSet = async ({
           algorithm: 'HS256',
           expiresIn: ACCESS_TOKEN_TTL_SECONDS,
           jwtid: accessTokenId,
+          issuer,
         }
       );
       const accessTokenItem: AccessToken = Object.fromEntries(
