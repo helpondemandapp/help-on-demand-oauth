@@ -17,7 +17,7 @@ const Consent = ({ consentDetails }: ConsentProps) => {
   const allowMutation = useMutation({
     mutationKey: ['consent', 'allow', requestId],
     mutationFn: async ({ requestId }: { requestId: string }) => {
-      const response = await fetch(`/api/allow?requestId=${requestId}`, {
+      const response = await fetch(`/api/approve?requestId=${requestId}`, {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify({ requestId }),
