@@ -12,7 +12,6 @@ import { normalizeScopeString, validateClientScopes, validateUserScopes } from '
 import { openSql } from '/opt/nodejs/data/sql/db.js';
 import { fetchUserWithRoles } from '/opt/nodejs/data/sql/users.js';
 import type { Client } from '/opt/nodejs/data/dynamodb/schema.js';
-import { setContext } from '/opt/nodejs/logging/wideEvent.js';
 
 const QueryParametersSchema = z.object({
   client_id: z.string().nonempty('client_id is required'),

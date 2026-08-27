@@ -8,6 +8,7 @@ const BaseClientSchema = z.object({
     .looseObject({
       name: z.string().optional(),
       hodCarrierId: z.int().optional(),
+      uri: z.string().optional(),
     })
     .optional()
     .default({}),
