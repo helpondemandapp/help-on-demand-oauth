@@ -74,7 +74,6 @@ export const handler = apiRequestLambdaWrapper({
       if (codeChallengeMethod !== 'S256') {
         return res.status(400).json({ error: 'code_challenge_method must be "S256" when code_challenge is provided' });
       }
-      setContext('codeChallenge', codeChallenge);
     }
 
     const scope = normalizeScopeString(params.scope ?? client.defaultScopes);

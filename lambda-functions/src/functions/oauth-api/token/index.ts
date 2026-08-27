@@ -92,12 +92,6 @@ export const handler = apiRequestLambdaWrapper({
         const challenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
         if (challenge !== codeChallenge) {
           setContext('invalidGrantReason', 'code_verifier_mismatch');
-          setContext('challengeContext', {
-            codeChallenge,
-            codeVerifier,
-            challenge,
-            code: authorizationCode,
-          });
           return res.status(400).json({ error: 'invalid_grant' });
         }
       }
