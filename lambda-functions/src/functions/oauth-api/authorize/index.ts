@@ -12,6 +12,7 @@ import { normalizeScopeString, validateClientScopes, validateUserScopes } from '
 import { openSql } from '/opt/nodejs/data/sql/db.js';
 import { fetchUserWithRoles } from '/opt/nodejs/data/sql/users.js';
 import type { Client } from '/opt/nodejs/data/dynamodb/schema.js';
+import { setContext } from '/opt/nodejs/logging/wideEvent.js';
 
 const QueryParametersSchema = z.object({
   client_id: z.string().nonempty('client_id is required'),
@@ -73,6 +74,7 @@ export const handler = apiRequestLambdaWrapper({
       if (codeChallengeMethod !== 'S256') {
         return res.status(400).json({ error: 'code_challenge_method must be "S256" when code_challenge is provided' });
       }
+      setContext('codeChallenge', codeChallenge);
     }
 
     const scope = normalizeScopeString(params.scope ?? client.defaultScopes);
