@@ -7,7 +7,10 @@ import { setContext } from '/opt/nodejs/logging/wideEvent.js';
 import { normalizeScopeString, validateClientScopes } from '/opt/nodejs/core/scopes.js';
 import { findUserConsent } from '/opt/nodejs/data/dynamodb/consents.js';
 import { getConsentRequestFromParameters } from '/opt/nodejs/core/consentRequests.js';
-import { authorizationCodeRedirectPath, createAuthorizationCodeFromConsent } from '/opt/nodejs/data/dynamodb/authorizationCodes.js';
+import {
+  authorizationCodeRedirectPath,
+  createAuthorizationCodeFromConsent,
+} from '/opt/nodejs/data/dynamodb/authorizationCodes.js';
 
 export const handler = apiRequestWithUserLambdaWrapper({
   onUnauthorized: redirectToLoginOnUnAuthorized(),

@@ -1,8 +1,5 @@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult, Context } from 'aws-lambda';
 import { lambdaHandler, setContext } from '/opt/nodejs/logging/wideEvent.js';
-import { getConsentRequestFromParameters } from '/opt/nodejs/core/consentRequests.js';
-import { normalizeScopeString, separateScopeString } from '/opt/nodejs/core/scopes.js';
-import { getScopeDescriptionsForNames } from '/opt/nodejs/data/sql/scopes.js';
 import { fetchUserWithRoles, type UserWithRoles } from '/opt/nodejs/data/sql/users.js';
 import { findSessionById } from '/opt/nodejs/data/dynamodb/sessions.js';
 import { openSql } from '/opt/nodejs/data/sql/db.js';

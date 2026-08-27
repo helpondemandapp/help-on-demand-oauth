@@ -1,7 +1,7 @@
 import { useRequestId } from '@/contexts/RequestId/context.ts';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React from 'react';
-import { Alert, Button, Card, Col, ListGroup, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Row, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router';
 import { tryParseErrorMessage } from '@/api/apiHelpers.ts';
 import { ConsentRequestDetails } from '@/library/ConsentRequestDetails.ts';
