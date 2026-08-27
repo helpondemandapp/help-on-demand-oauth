@@ -85,3 +85,16 @@ export const getScopesWithAllowListForNames = async (scopeNames: string[]): Prom
 
   return Array.from(scopeMap.values());
 };
+
+export const publicScopes = async () => {
+  const { recordset } = await lrq()
+    .request()
+    .query<{ scope: string }>(
+      `
+        SELECT [Scope] AS [scope]
+        FROM dbo.[OAuthScopes]
+        WHERE [MaximumClientAllowed] LIKE 'public'
+      `
+    );
+  return recordset.map((row) => row.scope);
+};
