@@ -10,6 +10,7 @@ export const DynamoDBTableNames = {
   SESSIONS_TABLE_NAME: 'OAuthSessions',
   CONSENTS_TABLE_NAME: 'OAuthConsents',
   AUTHORIZATION_CODES_TABLE_NAME: 'OAuthAuthorizationCodes',
+  ACCESS_TOKENS_TABLE_NAME: 'OAuthAccessTokens',
 } as const satisfies Record<`${Uppercase<string>}_TABLE_NAME`, TableName>;
 export type DynamoDBTableName = (typeof DynamoDBTableNames)[keyof typeof DynamoDBTableNames];
 
@@ -48,6 +49,11 @@ export default class DynamoDatabase extends Construct {
 
     this.createTable(DynamoDBTableNames.AUTHORIZATION_CODES_TABLE_NAME, {
       partitionKey: { type: dynamodb.AttributeType.STRING, name: 'code' },
+      timeToLiveAttribute: 'ttl',
+    });
+
+    this.createTable(DynamoDBTableNames.ACCESS_TOKENS_TABLE_NAME, {
+      partitionKey: { type: dynamodb.AttributeType.STRING, name: 'accessTokenId' },
       timeToLiveAttribute: 'ttl',
     });
   }

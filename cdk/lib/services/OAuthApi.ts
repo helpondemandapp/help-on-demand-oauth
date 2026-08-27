@@ -94,6 +94,17 @@ export class OAuthApi extends Construct {
 
     this.addResource({
       parentResource: apiResource,
+      path: 'token',
+      methods: ['POST'],
+      networks: props.networks,
+      globals: props.globals,
+      lambdaFunction: {
+        functionFolder: 'oauth-api/token',
+      },
+    });
+
+    this.addResource({
+      parentResource: apiResource,
       path: 'consent',
       methods: ['GET'],
       networks: props.networks,

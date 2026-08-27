@@ -1,7 +1,7 @@
 import * as crypto from 'node:crypto';
 import { Environment } from '/opt/nodejs/config/env.js';
-import { dynamodb } from '/opt/nodejs/data/dynamodb/db.js';
-import { type AuthorizationCode, type UserConsent } from '/opt/nodejs/data/dynamodb/schema.js';
+import { dynamodb, dynamoSchemaGet } from '/opt/nodejs/data/dynamodb/db.js';
+import { AuthorizationCodeSchema, type AuthorizationCode, type UserConsent } from '/opt/nodejs/data/dynamodb/schema.js';
 
 export const createAuthorizationCodeFromConsent = async (
   consent: UserConsent,
@@ -52,4 +52,25 @@ export const authorizationCodeRedirectPath = (authorizationCode: AuthorizationCo
     urlParams.append('state', state);
   }
   return `${authorizationCode.redirectUri}?${urlParams}`;
+};
+
+export const findAuthorizationCode = async (code: string): Promise<AuthorizationCode | null> => {
+  const item = await dynamoSchemaGet({
+    tableNameEnvVariable: 'AUTHORIZATION_CODES_TABLE_NAME',
+    key: { code: code.trim() },
+    schema: AuthorizationCodeSchema,
+  });
+  if (item === null) return null;
+  if (item.expiresAtUTCMillis < Date.now()) return null;
+  return item;
+};
+
+export const markAuthorizationCodeAsUsed = async (code: string): Promise<void> => {
+  await dynamodb.update({
+    TableName: Environment.AUTHORIZATION_CODES_TABLE_NAME,
+    Key: { code: code.trim() },
+    UpdateExpression: 'SET #used = :true',
+    ExpressionAttributeNames: { '#used': 'used' },
+    ExpressionAttributeValues: { ':true': true },
+  });
 };

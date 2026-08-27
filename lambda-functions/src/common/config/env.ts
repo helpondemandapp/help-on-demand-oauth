@@ -9,6 +9,7 @@ export const Environment = z
     SESSIONS_TABLE_NAME: z.string().nonempty(),
     CONSENTS_TABLE_NAME: z.string().trim().nonempty(),
     AUTHORIZATION_CODES_TABLE_NAME: z.string().trim().nonempty(),
+    ACCESS_TOKENS_TABLE_NAME: z.string().trim().nonempty(),
   })
   .parse(process.env);
 
