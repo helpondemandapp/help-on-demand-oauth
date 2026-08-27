@@ -97,6 +97,9 @@ export const handler = apiRequestLambdaWrapper({
     if (consent === null || !consent.approved) {
       return await createConsentRequest(client, params, codeChallenge, 'consent', res);
     }
+    // If the user has already approved the scope and client, we can skip the consent page and directly issue an authorization code.
+    // But we need to ensure that the code_challenge is stored in the consent so that it can be validated when the authorization code is exchanged for an access token.
+    consent.codeChallenge = codeChallenge;
 
     const userScopeError = validateUserScopes(user, clientScopes.systemScopes);
     if (userScopeError.error) {
