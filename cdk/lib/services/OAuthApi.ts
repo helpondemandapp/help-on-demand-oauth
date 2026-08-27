@@ -94,7 +94,7 @@ export class OAuthApi extends Construct {
     this.addResource({
       parentResource: apiResource,
       path: 'consent',
-      methods: ['GET', 'POST'],
+      methods: ['GET'],
       networks: props.networks,
       globals: props.globals,
       lambdaFunction: {
@@ -123,6 +123,18 @@ export class OAuthApi extends Construct {
       vpcRequired: true,
       lambdaFunction: {
         functionFolder: 'oauth-api/deny',
+      },
+    });
+
+    this.addResource({
+      parentResource: apiResource,
+      path: 'approve',
+      methods: ['POST'],
+      networks: props.networks,
+      globals: props.globals,
+      vpcRequired: true,
+      lambdaFunction: {
+        functionFolder: 'oauth-api/approve',
       },
     });
   }

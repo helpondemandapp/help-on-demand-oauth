@@ -12,20 +12,39 @@ type ConsentProps = {
 
 const Consent = ({ consentDetails }: ConsentProps) => {
   const requestId = useRequestId();
+  const navigate = useNavigate();
 
   const allowMutation = useMutation({
     mutationKey: ['consent', 'allow', requestId],
-    mutationFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    mutationFn: async ({ requestId }: { requestId: string }) => {
+      const response = await fetch(`/api/allow?requestId=${requestId}`, {
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({ requestId }),
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized');
+        }
+        if (response.status === 403) {
+          throw new Error('Forbidden');
+        }
+        throw new Error(tryParseErrorMessage(await response.text(), 'Failed to allow consent request'));
+      }
     },
     onSuccess: () => {
       window.location.href = `/api/consent?requestId=${requestId}`;
+    },
+    onError: (e) => {
+      if (e.message === 'Unauthorized' || e.message === 'Forbidden') {
+        navigate(`/login?requestId=${requestId}`, { replace: true });
+      }
     },
   });
 
   const onAllowClick = () => {
     if (allowMutation.isPending || allowMutation.isSuccess) return;
-    allowMutation.mutate();
+    allowMutation.mutate({ requestId: requestId });
   };
 
   return (
@@ -76,6 +95,15 @@ const Consent = ({ consentDetails }: ConsentProps) => {
           </Button>
         </Col>
       </Row>
+      <Alert
+        show={allowMutation.isError}
+        dismissible
+        onClose={() => allowMutation.reset()}
+        variant={'danger'}
+        className={'mt-3'}
+      >
+        {allowMutation.error?.message}
+      </Alert>
     </>
   );
 };
