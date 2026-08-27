@@ -5,6 +5,7 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import express from 'express';
 import { createHash, randomBytes } from 'node:crypto';
 import open from 'open';
+import { z } from 'zod';
 
 const sts = new STSClient({ credentials: fromSSO({ profile: 'dev-admin' }) });
 
@@ -47,6 +48,14 @@ authorizeUrl.searchParams.set('state', state);
 authorizeUrl.searchParams.set('code_challenge', codeChallenge);
 authorizeUrl.searchParams.set('code_challenge_method', 'S256');
 
+const TokenResponseSchema = z.object({
+  access_token: z.string(),
+  token_type: z.literal('Bearer'),
+  expires_in: z.number(),
+  scope: z.string().optional(),
+  refresh_token: z.string(),
+});
+
 const app = express();
 const server = app.listen(callbackPort, () => {
   console.log(`Callback server listening at ${callbackBaseUrl}`);
@@ -80,8 +89,83 @@ app.get(callbackPath, (req, res) => {
     return;
   }
 
-  console.log(`Authorization code: ${code}`);
-  console.log(`PKCE code_verifier (use this on token exchange): ${codeVerifier}`);
-  res.status(200).send('Authorization code captured. You can close this tab.');
-  server.close();
+  void (async () => {
+    const tokenResponse = await fetch(new URL('/api/token', authServerBaseUrl), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+        client_id: client.clientId,
+        client_secret: client.clientSecret,
+        code_verifier: codeVerifier,
+      }),
+    });
+    const tokenBody = await tokenResponse.json();
+
+    if (!tokenResponse.ok) {
+      console.error('Token exchange failed:', tokenBody);
+      res.status(500).send(`Token exchange failed: ${JSON.stringify(tokenBody)}`);
+      server.close();
+      return;
+    }
+
+    const parsedTokenBody = TokenResponseSchema.safeParse(tokenBody);
+    if (!parsedTokenBody.success) {
+      console.error('Token response validation failed:', parsedTokenBody.error);
+      res.status(500).send(`Token response validation failed: ${parsedTokenBody.error}`);
+      server.close();
+      return;
+    }
+    const validatedTokenBody = parsedTokenBody.data;
+
+    console.log('Authorization code exchange succeeded.');
+    console.log(`Access token: ${validatedTokenBody.access_token}`);
+    console.log(`Refresh token: ${validatedTokenBody.refresh_token}`);
+
+    const refreshToken = validatedTokenBody.refresh_token;
+
+    if (refreshToken !== null) {
+      const refreshResponse = await fetch(new URL('/api/token', authServerBaseUrl), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: refreshToken,
+          client_id: client.clientId,
+          client_secret: client.clientSecret,
+        }),
+      });
+      const refreshBody = await refreshResponse.json();
+      if (!refreshResponse.ok) {
+        console.error('Refresh token exchange failed:', refreshBody);
+        res.status(500).send(`Refresh token exchange failed: ${JSON.stringify(refreshBody)}`);
+        server.close();
+        return;
+      }
+      const parsedRefreshBody = TokenResponseSchema.safeParse(refreshBody);
+      if (!parsedRefreshBody.success) {
+        console.error('Refresh token response validation failed:', parsedRefreshBody.error);
+        res.status(500).send(`Refresh token response validation failed: ${parsedRefreshBody.error}`);
+        server.close();
+        return;
+      }
+      const validatedRefreshBody = parsedRefreshBody.data;
+      console.log('Refresh token exchange succeeded.');
+      console.log(`Refreshed access token: ${validatedRefreshBody.access_token}`);
+      console.log(`New refresh token: ${validatedRefreshBody.refresh_token}`);
+    }
+
+    res.status(200).send('Authorization and token flow succeeded. You can close this tab.');
+    server.close();
+  })().catch((e) => {
+    console.error('Token flow failed:', e);
+    res.status(500).send(`Token flow failed: ${String(e)}`);
+    server.close();
+  });
 });
