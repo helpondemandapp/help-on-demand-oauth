@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "test-oauth-flow": "tsx src/test-oauth-flow.ts"
   },
   "type": "module",

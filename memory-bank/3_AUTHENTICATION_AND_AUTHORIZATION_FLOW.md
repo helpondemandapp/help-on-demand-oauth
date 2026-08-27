@@ -1,11 +1,13 @@
 # Authentication and Authorization Flow
 
 ## Scope
+
 - Project: `help-on-demand-oauth`
 - Focus: runtime behavior of OAuth authentication, consent, and token exchange handlers.
 - Source of truth: backend code under `lambda-functions/src/functions/oauth-api` and shared modules under `lambda-functions/src/common`.
 
 ## Endpoint Contracts
+
 - `GET /api/authorize`
   - Validates OAuth query params (`client_id`, `redirect_uri`, `response_type=code`, optional `scope`, `state`, PKCE fields).
   - Validates client and redirect URI allow-list membership.
@@ -33,6 +35,7 @@
   - Returns issuer metadata, endpoint URLs, supported grants/response types, and public scopes.
 
 ## Request and Redirect Contract
+
 - `requestId` is created in `authorize` via consent-request persistence and passed through UI redirects.
 - Login redirect contract: `/login?requestId=<id>`.
 - Consent redirect contract: `/consent?requestId=<id>`.
@@ -43,6 +46,7 @@
   - stored `redirectUri` still present in client allow-list.
 
 ## Session and Cookie Behavior
+
 - Session cookie name: `sessionId`.
 - Cookie attributes on set: `Secure`, `HttpOnly`, `SameSite=Lax`, `Path=/`, with max-age from session TTL.
 - Session backing store: `OAuthSessions` DynamoDB table.
@@ -52,12 +56,14 @@
   - Invalid session/user clears cookie (`sessionId` set with `Max-Age=0`).
 
 ## Consent Decision Behavior
+
 - Consent lookup key semantics: latest consent by `(userId, clientId, normalized scope)`.
 - If approved consent exists, flow skips consent UI and issues authorization code.
 - If no consent or denied consent exists, flow redirects to consent UI.
 - New consent records (approve/deny) are short-lived and include approval state.
 
 ## Token Issuance and Validation Rules
+
 - Authorization code exchange (`grant_type=authorization_code`):
   - Requires code exists, is unexpired, not used, `client_id` match, exact `redirect_uri` match.
   - If code includes PKCE challenge, request must include `code_verifier`; SHA-256 base64url digest must match.
@@ -68,6 +74,7 @@
   - Issues new access/refresh pair.
 
 ## Persistence and TTLs in Flow
+
 - Consent request (`OAuthConsentRequests`): 10 minutes.
 - Session (`OAuthSessions`): 30 minutes.
 - Consent (`OAuthConsents`): 15 minutes.
@@ -76,6 +83,7 @@
 - Refresh token (stored in `OAuthAuthorizationCodes` as `rt_<token>`): 30 days.
 
 ## Key File References
+
 - `lambda-functions/src/functions/oauth-api/authorize/index.ts`
 - `lambda-functions/src/functions/oauth-api/authenticate/index.ts`
 - `lambda-functions/src/functions/oauth-api/consent/index.ts`
@@ -93,5 +101,5 @@
 - `lambda-functions/src/common/data/dynamodb/oauthTokens.ts`
 
 ## Edit History
-- `2026-08-27T22:46:32Z` - Created: added authentication and authorization flow memory with endpoint contracts, requestId redirect contract, session/cookie behavior, consent logic, token rules, and TTL persistence details.
 
+- `2026-08-27T22:46:32Z` - Created: added authentication and authorization flow memory with endpoint contracts, requestId redirect contract, session/cookie behavior, consent logic, token rules, and TTL persistence details.

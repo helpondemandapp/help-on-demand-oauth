@@ -1,6 +1,7 @@
 # Database Architecture
 
 ## Scope
+
 - Project: `help-on-demand-oauth`
 - Primary persistence is in GovCloud runtime (`lambda-functions` + `cdk/lib/gov-cloud-stack.ts`).
 - Commercial stack does not own data stores; it serves frontend and proxies API traffic to backend.
@@ -8,10 +9,12 @@
 ## Data Sources Inventory
 
 ### 1) DynamoDB (authoritative OAuth state)
+
 - Provisioned by `cdk/lib/services/DynamoDatabase.ts` with on-demand billing and deletion protection.
 - Lambda table names are injected from `DynamoDBTableNames` via `cdk/lib/constructs/lambda-function.ts`.
 
 #### Tables
+
 1. `OAuthClients`
    - PK: `clientId`
    - Purpose: OAuth client registration metadata and secrets.
@@ -50,12 +53,14 @@
    - TTL in code: 1 hour
 
 ### 2) SQL Server `LRQ` (external relational source)
+
 - Not provisioned in this repo; accessed at runtime with `mssql`.
 - Connection bootstrap: `lambda-functions/src/common/data/sql/db.ts` (`openSql`, singleton pool).
 - Credentials source: Secrets Manager secret `db_connection_strings`.
 - Connection settings: port `1433`, DB `LRQ`, `encrypt: true`, `trustServerCertificate: true`.
 
 #### Queried domains
+
 1. Users and roles
    - Module: `lambda-functions/src/common/data/sql/users.ts`
    - Tables: `dbo.AspNetUsers`, `dbo.AspNetUserRoles`, `dbo.AspNetRoles`
@@ -72,11 +77,13 @@
    - Purpose: carrier lookup by ID (used for client metadata enrichment).
 
 ### 3) AWS Secrets Manager (configuration secrets)
+
 - Access is granted in `cdk/lib/services/GovCloudGlobals.ts`.
 - Fetch layer: `lambda-functions/src/common/core/secrets.ts`.
 - Runtime has in-memory secret cache (5-minute TTL).
 
 #### Secrets used
+
 1. `db_connection_strings`
    - Keys: `lrq_username`, `lrq_password`, `lrq_server`
    - Used by: `lambda-functions/src/common/data/sql/db.ts`
@@ -86,6 +93,7 @@
    - Used by: `lambda-functions/src/common/data/dynamodb/oauthTokens.ts`
 
 ### 4) External HTTP data source: Help on Demand API
+
 - Base URL: env var `BWS_WEB_BASE_URL`.
 - Modules:
   - `lambda-functions/src/common/data/hodAPI/hodTokens.ts` (`POST /api/token`)
@@ -93,6 +101,7 @@
 - Purpose: user authentication and account profile retrieval during OAuth flow.
 
 ### 5) Runtime/session and token state handling
+
 - Session cookie: emitted in `lambda-functions/src/common/protocol/http.ts` (`sessionId`, HttpOnly/Secure/SameSite=Lax).
 - Session backing store: `OAuthSessions` DynamoDB.
 - Auth code replay protection: `used` flag in `OAuthAuthorizationCodes`.
@@ -101,14 +110,17 @@
 ## Provisioning and Partition Differences
 
 ### GovCloud (`AWS_PARTITION=gov-cloud`)
+
 - Creates and owns DynamoDB tables (`DynamoDatabase`), Lambda role secret grants, and VPC-bound lambdas for SQL/API access.
 - Requires `VPC_ID`, `PRIVATE_SUBNET_IDS`, and `BWS_WEB_BASE_URL` (`cdk/lib/library.ts`).
 
 ### Commercial (`AWS_PARTITION=commercial`)
+
 - Does not create DynamoDB/SQL/Secrets resources in this stack.
 - Uses `BACKEND_INVOKE_URL` for API forwarding from CloudFront/S3 frontend stack.
 
 ## Environment Contracts Related to Data Sources
+
 - Lambda runtime validation in `lambda-functions/src/common/config/env.ts` requires:
   - `OAUTH_CLIENTS_TABLE_NAME`
   - `CONSENT_REQUESTS_TABLE_NAME`
@@ -120,7 +132,9 @@
   - `BWS_WEB_BASE_URL`
 
 ## Tooling and Non-Prod Data Access
+
 - `tools/src/test-oauth-flow.ts` reads `OAuthClients` from DynamoDB and exercises `/api/authorize` + `/api/token` (including refresh flow) using AWS SSO profile credentials.
 
 ## Edit History
+
 - `2026-08-27T22:37:16Z` - Created: initial full inventory of database architecture and all identified data sources across DynamoDB, SQL, Secrets Manager, and external HOD API.
