@@ -4,6 +4,7 @@ import { createNewConsentRequest } from '/opt/nodejs/data/dynamodb/consentReques
 import { getOauthClient } from '/opt/nodejs/data/dynamodb/clients.js';
 import { findSessionById } from '/opt/nodejs/data/dynamodb/sessions.js';
 import { findUserConsent } from '/opt/nodejs/data/dynamodb/consents.js';
+import { authorizationCodeRedirectPath, createAuthorizationCodeFromConsent } from '/opt/nodejs/data/dynamodb/authorizationCodes.js';
 import { normalizeScopeString, validateClientScopes, validateUserScopes } from '/opt/nodejs/core/scopes.js';
 import { openSql } from '/opt/nodejs/data/sql/db.js';
 import { fetchUserWithRoles } from '/opt/nodejs/data/sql/users.js';
@@ -97,7 +98,7 @@ export const handler = apiRequestLambdaWrapper({
       return res.status(400).json({ error: userScopeError.message });
     }
 
-    // todo use case: user is logged in and has consented
-    return res.status(200).json({ message: 'Hello world!' });
+    const authorizationCode = await createAuthorizationCodeFromConsent(consent, params.redirect_uri);
+    return res.redirect(authorizationCodeRedirectPath(authorizationCode, params.state ?? null));
   },
 });

@@ -68,7 +68,9 @@ export const AuthorizationCodeSchema = z.object({
   scope: z.string().trim().nullable().optional(),
   state: z.string().trim().nullable().optional(),
   codeChallenge: z.string().trim().nullable().optional(),
+  used: z.boolean(),
   createdAtUTCMillis: z.number().int().nonnegative(),
   expiresAtUTCMillis: z.number().int().nonnegative(),
   ttl: z.number().int().nonnegative(),
 });
+export type AuthorizationCode = z.infer<typeof AuthorizationCodeSchema>;

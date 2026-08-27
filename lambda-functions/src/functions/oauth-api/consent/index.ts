@@ -7,6 +7,7 @@ import { setContext } from '/opt/nodejs/logging/wideEvent.js';
 import { normalizeScopeString, validateClientScopes } from '/opt/nodejs/core/scopes.js';
 import { findUserConsent } from '/opt/nodejs/data/dynamodb/consents.js';
 import { getConsentRequestFromParameters } from '/opt/nodejs/core/consentRequests.js';
+import { authorizationCodeRedirectPath, createAuthorizationCodeFromConsent } from '/opt/nodejs/data/dynamodb/authorizationCodes.js';
 
 export const handler = apiRequestWithUserLambdaWrapper({
   onUnauthorized: redirectToLoginOnUnAuthorized(),
@@ -33,7 +34,7 @@ export const handler = apiRequestWithUserLambdaWrapper({
       return res.status(400).json({ error: clientScopes.message });
     }
     // note we dont really need to revalidate user scope access since we already did that in the authorize endpoint.
-    // todo: create auth code and redirect to the redirect_uri with the code and state
-    return new ResponseBuilder().status(500).json({ message: 'Consent found. Auth code not implemented yet.' });
+    const authorizationCode = await createAuthorizationCodeFromConsent(consent, consentRequest.redirectUri);
+    return res.redirect(authorizationCodeRedirectPath(authorizationCode, consentRequest.state ?? null));
   },
 });
