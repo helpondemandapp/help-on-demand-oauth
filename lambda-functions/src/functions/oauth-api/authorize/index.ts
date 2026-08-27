@@ -51,7 +51,6 @@ export const handler = apiRequestLambdaWrapper({
     }
 
     const scope = normalizeScopeString(params.scope ?? client.defaultScopes);
-    // todo add scope validation
 
     const cookies = parseCookieHeader(event);
     const sessionId = cookies.get('sessionId');

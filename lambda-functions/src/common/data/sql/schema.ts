@@ -8,6 +8,7 @@ export const ScopeSchema = z.object({
   UserLevel: z
     .union([z.literal(UserLevel.Admin), z.literal(UserLevel.Carrier), z.literal(UserLevel.Broker)])
     .nullable(), // NULL indicates all levels
+  MaximumClientAllowed: z.enum(['public', 'private', 'internal']),
 });
 export type Scope = z.infer<typeof ScopeSchema>;
 

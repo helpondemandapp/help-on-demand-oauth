@@ -14,7 +14,7 @@ const BaseClientSchema = z.object({
 });
 
 const PrivateClientSchema = BaseClientSchema.extend({
-  clientType: z.literal('private'),
+  clientType: z.enum(['private', 'internal']),
   clientSecret: z.string().trim().nonempty(),
 });
 
