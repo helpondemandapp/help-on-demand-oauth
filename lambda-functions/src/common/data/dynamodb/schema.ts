@@ -74,3 +74,16 @@ export const AuthorizationCodeSchema = z.object({
   ttl: z.number().int().nonnegative(),
 });
 export type AuthorizationCode = z.infer<typeof AuthorizationCodeSchema>;
+
+export const AccessTokenSchema = z.object({
+  accessTokenId: z.string().trim().nonempty(),
+  token: z.string().trim().nonempty(),
+  clientId: z.string().trim().nonempty(),
+  userId: z.string().trim().nonempty(),
+  audience: z.string().trim().nonempty(),
+  scope: z.string().trim().nullable().optional(),
+  createdAtUTCMillis: z.number().int().nonnegative(),
+  expiresAtUTCMillis: z.number().int().nonnegative(),
+  ttl: z.number().int().nonnegative(),
+});
+export type AccessToken = z.infer<typeof AccessTokenSchema>;
