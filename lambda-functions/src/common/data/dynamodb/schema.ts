@@ -59,3 +59,16 @@ export const UserConsentSchema = z.object({
   codeChallenge: z.string().nullable().optional(),
 });
 export type UserConsent = z.infer<typeof UserConsentSchema>;
+
+export const AuthorizationCodeSchema = z.object({
+  code: z.string().trim().nonempty(),
+  clientId: z.string().trim().nonempty(),
+  userId: z.string().trim().nonempty(),
+  redirectUri: z.string().trim().nonempty(),
+  scope: z.string().trim().nullable().optional(),
+  state: z.string().trim().nullable().optional(),
+  codeChallenge: z.string().trim().nullable().optional(),
+  createdAtUTCMillis: z.number().int().nonnegative(),
+  expiresAtUTCMillis: z.number().int().nonnegative(),
+  ttl: z.number().int().nonnegative(),
+});

@@ -75,6 +75,7 @@ export class OAuthApi extends Construct {
       methods: ['GET'],
       networks: props.networks,
       globals: props.globals,
+      vpcRequired: true,
       lambdaFunction: {
         functionFolder: 'oauth-api/authorize',
       },
