@@ -1,31 +1,46 @@
 name: Build and Deploy to AWS
 on:
+  push:
+    branches:
+      - 'dev/HOD-**'
   workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        description: The target deployment environment
 
 permissions:
   id-token: write
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+  cancel-in-progress: false
+
 jobs:
-  build:
+  build-gov-cloud:
     runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+    outputs:
+      api-invoke-url: ${{ steps.stack-outputs.outputs.invoke-url }}
 
     steps:
       ### Setup ###
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         name: Checkout code
-      - uses: aws-actions/configure-aws-credentials@v5
+      - uses: aws-actions/configure-aws-credentials@v6
         name: Configure AWS credentials
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_GOV }}
+          aws-region: ${{ vars.AWS_REGION_GOV }}
       - name: Setup Node.JS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
-          node-version: ${{ vars.NODE_VERSION }}
-      - name: Add Account ID to Environment
+          node-version-file: .node-version
+      - name: Add Environment Variables
         run: |-
           echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)" >> $GITHUB_ENV
+          echo "NODE_VERSION=$(tr -cd '0-9' < .node-version)" >> $GITHUB_ENV
       ### Build Source ###
       ### Build Lambdas ###
       - name: Install Lambda Dependencies
@@ -60,9 +75,108 @@ jobs:
       - name: Deploy CDK
         working-directory: ./cdk
         env:
-          STACK_NAME: ''
-          NODE_VERSION: ${{ vars.NODE_VERSION }}
+          STACK_NAME: 'hod-oauth'
+          AWS_PARTITION: 'gov-cloud'
+          VPC_ID: ${{ vars.VPC_ID }}
+          PRIVATE_SUBNET_IDS: ${{ vars.PRIVATE_SUBNETS }}
+          AUTH_DOMAIN: ${{ vars.SERVER_HOST }}
+          ENVIRONMENT_NAME: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+          BWS_WEB_BASE_URL: ${{ vars.BWS_WEB_BASE_URL }}
         run: |-
           npm run cdk -- bootstrap
           npm run cdk -- synth
           npm run cdk -- deploy --require-approval never
+      - name: Create Stack Outputs
+        id: stack-outputs
+        run: |-
+          echo "invoke-url=$(aws cloudformation describe-stacks --stack-name hod-oauth --query "Stacks[0].Outputs[?OutputKey=='OAuthApiUrl'].OutputValue" --output text)" >> $GITHUB_OUTPUT
+  build-frontend:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+    steps:
+      - uses: actions/checkout@v7
+        name: Checkout code
+      - name: Setup Node.JS
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Build Frontend
+        working-directory: ./frontend
+        env:
+          VITE_WEB_APP_BASE_URL: ${{ vars.BWS_WEB_BASE_URL }}
+        run: |-
+          npm ci
+          node --run build
+      - name: Upload Frontend Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-build
+          path: frontend/dist
+  deploy-commercial:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+    needs: [build-gov-cloud]
+    outputs:
+      deploy-bucket: ${{ steps.stack-outputs.outputs.deploy-bucket }}
+      dist-id: ${{ steps.stack-outputs.outputs.dist-id }}
+    steps:
+      ### Setup ###
+      - uses: actions/checkout@v7
+        name: Checkout code
+      - uses: aws-actions/configure-aws-credentials@v6
+        name: Configure AWS credentials
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_COMMERCIAL }}
+          aws-region: ${{ vars.AWS_REGION_COMMERCIAL }}
+      - name: Setup Node.JS
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - name: Add Environment Variables
+        run: |-
+          echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text)" >> $GITHUB_ENV
+          echo "NODE_VERSION=$(tr -cd '0-9' < .node-version)" >> $GITHUB_ENV
+      ### Deploy Cloud ###
+      - name: Install CDK Dependencies
+        working-directory: ./cdk
+        run: npm ci
+      - name: Deploy CDK
+        working-directory: ./cdk
+        env:
+          STACK_NAME: 'hod-oauth'
+          AWS_PARTITION: 'commercial'
+          AUTH_DOMAIN: ${{ vars.SERVER_HOST }}
+          ENVIRONMENT_NAME: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+          CERT_ARN: ${{ vars.CERT_ARN }}
+          BACKEND_INVOKE_URL: ${{ needs.build-gov-cloud.outputs.api-invoke-url }}
+        run: |-
+          npm run cdk -- bootstrap
+          npm run cdk -- synth
+          npm run cdk -- deploy --require-approval never
+      - name: Create Stack Outputs
+        id: stack-outputs
+        run: |-
+          echo "deploy-bucket=$(aws cloudformation describe-stacks --stack-name hod-oauth --query "Stacks[0].Outputs[?OutputKey=='DeploymentBucketName'].OutputValue" --output text)" >> $GITHUB_OUTPUT
+          echo "dist-id=$(aws cloudformation describe-stacks --stack-name hod-oauth --query "Stacks[0].Outputs[?OutputKey=='CloudFrontDistributionId'].OutputValue" --output text)" >> $GITHUB_OUTPUT
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'push' && 'Development' || inputs.environment }}
+    needs: [build-frontend, deploy-commercial]
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        name: Configure AWS credentials
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN_COMMERCIAL }}
+          aws-region: ${{ vars.AWS_REGION_COMMERCIAL }}
+      - name: Download Frontend Build Artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: frontend-build
+          path: build
+      - name: Deploy Frontend to S3
+        run: |-
+          aws s3 sync build s3://${{ needs.deploy-commercial.outputs.deploy-bucket }} --delete
+      - name: Invalidate CloudFront Distribution
+        run: |-
+          INVALIDATION_ID=$(aws cloudfront create-invalidation --distribution-id "${{ needs.deploy-commercial.outputs.dist-id }}" --paths "/*" --query 'Invalidation.Id' --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "${{ needs.deploy-commercial.outputs.dist-id }}" --id "$INVALIDATION_ID"

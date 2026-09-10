@@ -1,13 +1,14 @@
+import js from '@eslint/js';
 import globals from 'globals';
-import pluginJs from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import { defineConfig } from 'eslint/config';
 
-export default [
-  { files: ['**/*.{js,mjs,cjs,ts}'] },
-  { languageOptions: { globals: globals.node } },
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
+export default defineConfig([
   {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    files: ['**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'warn',
@@ -17,15 +18,31 @@ export default [
           caughtErrorsIgnorePattern: '^_',
         },
       ],
-      '@typescript-eslint/naming-convention': [
-        'error',
-        {
-          selector: ['variableLike', 'method', 'typeLike'],
-          format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
-          leadingUnderscore: 'allow',
-        },
-      ],
-      '@typescript-eslint/no-empty-object-type': 'off',
     },
   },
-];
+  {
+    files: [
+      'cdk/**/*.{js,mjs,cjs,ts,mts,cts}',
+      'lambda-functions/**/*.{js,mjs,cjs,ts,mts,cts}',
+      'tools/**/*.{js,mjs,cjs,ts,mts,cts}',
+    ],
+    plugins: { js },
+    languageOptions: { globals: globals.node },
+  },
+  {
+    ignores: ['dist', 'build'],
+    files: ['frontend/**/*.{ts,tsx}'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.browser,
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      ...reactRefresh.configs.recommended.rules,
+    },
+  },
+]);
